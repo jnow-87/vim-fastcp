@@ -7,6 +7,8 @@ let s:kmap["\<right>"] = 'l'
 let s:kmap["\<up>"] = 'k'
 let s:kmap["\<down>"] = 'j'
 
+let s:key_timeout = "350m"
+
 
 " function to resolve special vim key codes to
 " normal mode commands
@@ -64,11 +66,14 @@ endfunction
 " leave_to	which mode to enter after function, currently only insert mode ('i')
 function Paste(op, leave_to)
 	" read char
-	let l:char = getchar()
+	exec "sleep " . s:key_timeout
+
+	let l:char = getchar(1)
 	let l:reg = nr2char(l:char)
 
 	" copy content of specified register (l:reg) if != 'p'  to unnamed register
 	if l:char >= 97 && l:char <= 122 && l:reg != 'p'
+		let l:char = getchar(0)
 		call setreg('"', getreg(l:reg))
 	endif
 
@@ -78,11 +83,6 @@ function Paste(op, leave_to)
 		normal! ""p
 	else
 		normal! ""P
-	endif
-
-	" if l:char is no valid register put it back
-	if l:char < 97 || l:char > 122 || l:reg == 'p'
-		exec "normal " . Nr2char(l:char)
 	endif
 
 	" change mode
