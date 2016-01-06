@@ -58,11 +58,7 @@ function Paste(op, leave_to)
 
 	" insert content of unnamed register to buffer
 	" prevent recursive execution via normal!
-	if a:op == 'p'
-		normal! ""p
-	else
-		normal! ""P
-	endif
+	exec 'normal! ""' . a:op
 
 	" change mode
 	if a:leave_to == 'i'
@@ -80,7 +76,7 @@ imap <silent> <C-v> <esc>:call Paste('p', 'i')<cr>
 function Testkey()
 	let a = getchar()
 	
-	echo "nrcode " . a . " key [" . nr2char(a) . "] kmap [" . Nr2char(a) . "]"
+	echo "nrcode " . a . " key [" . nr2char(a) . "]"
 endfunction
 
-nmap <silent>c :call Testkey()<cr>
+nmap <silent>c :call Testkey()<bar> :call Testkey()<cr>
