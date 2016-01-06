@@ -1,14 +1,38 @@
-let s:timeout = "400m"	" timeout to wait for the optional argument
+" dictionary that resolvse special vim keycodes to
+" normal mode commands
+let s:kmap={}
+let s:kmap["\<insert>"] = 'i'
+let s:kmap["\<left>"] = 'h'
+let s:kmap["\<right>"] = 'l'
+let s:kmap["\<up>"] = 'k'
+let s:kmap["\<down>"] = 'j'
+
+
+" function to resolve special vim key codes to
+" normal mode commands
+function Nr2char(nr)
+	" try to find entry in kmap, if no entry available
+	" use default nr2char()
+	try
+		let key = s:kmap[a:nr]
+	catch
+		let key = nr2char(a:nr)
+	endtry
+
+	if key == '' || key == ' '
+		return a:nr
+	else
+		return key
+	endif
+
+	return key == '' ? a:nr : key
+endfunction
 
 
 " copy selection into specified register
 "
 " op	define whether to yank ('y') or cut ('x')
 function Copy(op)
-	" read char from input
-	exec "sleep " . s:timeout
-	let l:char = getchar(1)
-
 	" copy last selection 'gv' into the unnamed register '""'
 	" prevent recursive call of 'y' via '!'
 	if a:op == 'x'
@@ -17,15 +41,20 @@ function Copy(op)
 		normal! gv""y
 	endif
 
+	" read char from input
+	let l:char = getchar()
+
 	" check if valid registers specified
 	" if not leave selection in unnamed register
 	if l:char >= 97 && l:char <= 122
-		let l:char = getchar()
 		let l:reg = nr2char(l:char)
 
 		" copy content of unnamed register to register
 		" specified at input 'l:reg'
 		call setreg(l:reg, @")
+	else
+		" put l:char to prevent eating it
+		exec "normal " . Nr2char(l:char)
 	endif
 endfunction
 
@@ -35,13 +64,11 @@ endfunction
 " leave_to	which mode to enter after function, currently only insert mode ('i')
 function Paste(op, leave_to)
 	" read char
-	exe "sleep " . s:timeout
-	let l:char = getchar(1)
+	let l:char = getchar()
 	let l:reg = nr2char(l:char)
 
 	" copy content of specified register (l:reg) if != 'p'  to unnamed register
 	if l:char >= 97 && l:char <= 122 && l:reg != 'p'
-		let l:char = getchar()
 		call setreg('"', getreg(l:reg))
 	endif
 
@@ -51,6 +78,11 @@ function Paste(op, leave_to)
 		normal! ""p
 	else
 		normal! ""P
+	endif
+
+	" if l:char is no valid register put it back
+	if l:char < 97 || l:char > 122 || l:reg == 'p'
+		exec "normal " . Nr2char(l:char)
 	endif
 
 	" change mode
@@ -66,15 +98,10 @@ nnoremap <silent>p :call Paste('p', '')<cr>
 nnoremap <silent>P :call Paste('P', '')<cr>
 imap <silent> <C-v> <esc>:call Paste('p', 'i')<cr>
 
-
-function Testoro()
-	sleep 1
-	let l:char = getchar(1)
-
-	echo "test: " . l:char . " " . nr2char(l:char)
+function Testkey()
+	let a = getchar()
+	
+	echo "nrcode " . a . " key [" . nr2char(a) . "] kmap [" . Nr2char(a) . "]"
 endfunction
 
-nnoremap <silent>c <esc>:call Testoro()<cr>
-
-
-"<c-r>=Copy()
+nmap <silent>c :call Testkey()<cr>
