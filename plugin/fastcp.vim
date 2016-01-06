@@ -1,33 +1,21 @@
 " dictionary that resolvse special vim keycodes to
 " normal mode commands
-let s:kmap={}
-let s:kmap["\<insert>"] = 'i'
-let s:kmap["\<left>"] = 'h'
-let s:kmap["\<right>"] = 'l'
-let s:kmap["\<up>"] = 'k'
-let s:kmap["\<down>"] = 'j'
-
-let s:key_timeout = "350m"
+let fastcp_key_timeout = "400"
 
 
-" function to resolve special vim key codes to
-" normal mode commands
-function Nr2char(nr)
-	" try to find entry in kmap, if no entry available
-	" use default nr2char()
-	try
-		let key = s:kmap[a:nr]
-	catch
-		let key = nr2char(a:nr)
-	endtry
+function Getchar(timeout_ms)
+	let l:sleeped = 0
 
-	if key == '' || key == ' '
-		return a:nr
-	else
-		return key
-	endif
+	while l:sleeped < a:timeout_ms
+		let l:c = getchar(1)
 
-	return key == '' ? a:nr : key
+		if l:c != 0
+			return c
+		endif
+
+		sleep 50m
+		let l:sleeped = l:sleeped + 50 
+	endwhile
 endfunction
 
 
@@ -44,19 +32,17 @@ function Copy(op)
 	endif
 
 	" read char from input
-	let l:char = getchar()
+	let l:char = Getchar(g:fastcp_key_timeout)
 
 	" check if valid registers specified
 	" if not leave selection in unnamed register
 	if l:char >= 97 && l:char <= 122
+		let l:char = getchar(0)		" consume the character
 		let l:reg = nr2char(l:char)
 
 		" copy content of unnamed register to register
 		" specified at input 'l:reg'
 		call setreg(l:reg, @")
-	else
-		" put l:char to prevent eating it
-		exec "normal " . Nr2char(l:char)
 	endif
 endfunction
 
@@ -66,9 +52,7 @@ endfunction
 " leave_to	which mode to enter after function, currently only insert mode ('i')
 function Paste(op, leave_to)
 	" read char
-	exec "sleep " . s:key_timeout
-
-	let l:char = getchar(1)
+	let l:char = Getchar(g:fastcp_key_timeout)
 	let l:reg = nr2char(l:char)
 
 	" copy content of specified register (l:reg) if != 'p'  to unnamed register
