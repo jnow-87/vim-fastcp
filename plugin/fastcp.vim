@@ -1,3 +1,10 @@
+if exists('g:loaded_fastcp') || &compatible
+	finish
+endif
+
+let g:loaded_fastcp = 1
+
+
 " dictionary that resolvse special vim keycodes to
 " normal mode commands
 let fastcp_key_timeout = "400"
@@ -72,11 +79,3 @@ vnoremap <silent>x <esc>:call Copy('x')<cr>
 nnoremap <silent>p :call Paste('p', '')<cr>
 nnoremap <silent>P :call Paste('P', '')<cr>
 imap <silent> <C-v> <esc>:call Paste('p', 'i')<cr>
-
-function Testkey()
-	let a = getchar()
-	
-	echo "nrcode " . a . " key [" . nr2char(a) . "]"
-endfunction
-
-nmap <silent>c :call Testkey()<bar> :call Testkey()<cr>
