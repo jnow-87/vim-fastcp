@@ -3,21 +3,16 @@
 let fastcp_key_timeout = "400"
 
 
+" read input character with timeout
 function Getchar(timeout_ms)
-	let l:sleeped = 0
-
-	while l:sleeped < a:timeout_ms
-		let l:c = getchar(1)
-
-		if l:c != 0
-			return c
-		endif
-
+	let l:sleeped = a:timeout_ms
+	while l:sleeped > 0 && getchar(1) == 0
 		sleep 50m
-		let l:sleeped = l:sleeped + 50 
+		let l:sleeped = l:sleeped - 50 
 	endwhile
-endfunction
 
+	return getchar(1)
+endfunction
 
 " copy selection into specified register
 "
