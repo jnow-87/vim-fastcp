@@ -5,13 +5,18 @@ endif
 let g:loaded_fastcp = 1
 
 
-" dictionary that resolvse special vim keycodes to
-" normal mode commands
-let fastcp_key_timeout = "400"
+""""
+"" global variables
+""""
+let g:fastcp_key_timeout = get(g:, "fastcp_key_timeout", 400)
 
 
-" read input character with timeout
-function Getchar(timeout_ms)
+""""
+"" local functions
+""""
+"{{{
+" \brief	read input character with timeout
+function s:getchar(timeout_ms)
 	let l:sleeped = a:timeout_ms
 	while l:sleeped > 0 && getchar(1) == 0
 		sleep 50m
@@ -20,41 +25,52 @@ function Getchar(timeout_ms)
 
 	return getchar(1)
 endfunction
+"}}}
 
-" copy selection into specified register
+""""
+"" main functions
+""""
+"{{{
+" \brief	copy selection into register
+"			content is always copied into unnamed register '"'
+"			if no target register is specified the content is also copied
+"			to 'x' or 'y' register, depending on a:op
+"			if a target register is specified the content is copied to it
 "
-" op	define whether to yank ('y') or cut ('x')
-function Copy(op)
-	" copy last selection 'gv' into the unnamed register '""'
-	" prevent recursive call of 'y' via '!'
-	if a:op == 'x'
-		normal! gv""x
-	else
-		normal! gv""y
-	endif
-
+" \param	op		define whether to yank ('y') or to cut ('x')
+function s:copy(op)
 	" read char from input
-	let l:char = Getchar(g:fastcp_key_timeout)
+	let l:char = s:getchar(g:fastcp_key_timeout)
 
 	" check if valid registers specified
 	" if not leave selection in unnamed register
 	if l:char >= 97 && l:char <= 122
-		let l:char = getchar(0)		" consume the character
-		let l:reg = nr2char(l:char)
+		let l:char = nr2char(getchar(0))		" consume the character
+	elseif a:op == 'x'
+		let l:char = 'x'
+	else
+		let l:char = 'y'
+	endif
 
-		" copy content of unnamed register to register
-		" specified at input 'l:reg'
-		call setreg(l:reg, @")
+	" copy last selection 'gv' into registers
+	" prevent recursive calls to 'x' or 'y' through '!'
+	if a:op == 'x'
+		exec 'normal! gv"' . l:char . 'x'
+		call setreg('"', getreg(l:char))
+	else
+		exec 'normal! gv"' . l:char . 'y'
+		call setreg('"', getreg(l:char))
 	endif
 endfunction
+"}}}
 
-" paste content from specified buffer
+"{{{
+" \brief	paste content from register
 "
-" op		define whether to paste in front ('P') or after ('p') cursor
-" leave_to	which mode to enter after function, currently only insert mode ('i')
-function Paste(op, leave_to)
+" \param	op		paste in front ('P') or after ('p') the cursor
+function s:paste(op)
 	" read char
-	let l:char = Getchar(g:fastcp_key_timeout)
+	let l:char = s:getchar(g:fastcp_key_timeout)
 	let l:reg = nr2char(l:char)
 
 	" copy content of specified register (l:reg) if != 'p'  to unnamed register
@@ -66,16 +82,15 @@ function Paste(op, leave_to)
 	" insert content of unnamed register to buffer
 	" prevent recursive execution via normal!
 	exec 'normal! ""' . a:op
-
-	" change mode
-	if a:leave_to == 'i'
-		startinsert
-	endif
 endfunction
+"}}}
 
 
-vnoremap <silent>y <esc>:call Copy('y')<cr>
-vnoremap <silent>x <esc>:call Copy('x')<cr>
-nnoremap <silent>p :call Paste('p', '')<cr>
-nnoremap <silent>P :call Paste('P', '')<cr>
-imap <silent> <C-v> <esc>:call Paste('p', 'i')<cr>
+""""
+"" mappings
+""""
+vnoremap <silent> y <esc>:call <sid>copy('y')<cr>
+vnoremap <silent> x <esc>:call <sid>copy('x')<cr>
+nnoremap <silent> p :call <sid>paste('p')<cr>
+nnoremap <silent> P :call <sid>paste('P')<cr>
+imap <silent> <c-v> <esc>:call <sid>paste('p')<cr><insert><right>
