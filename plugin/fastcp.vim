@@ -68,7 +68,8 @@ endfunction
 " \brief	paste content from register
 "
 " \param	op		paste in front ('P') or after ('p') the cursor
-function s:paste(op)
+" \param	ins		switch to insert mode once done
+function s:paste(op, ins)
 	" read char
 	let l:char = s:getchar(g:fastcp_key_timeout)
 	let l:reg = nr2char(l:char)
@@ -82,6 +83,11 @@ function s:paste(op)
 	" insert content of unnamed register to buffer
 	" prevent recursive execution via normal!
 	exec 'normal! ""' . a:op
+
+	" trigger insert mode
+	if a:ins
+		call feedkeys("\<insert>\<right>")
+	endif
 endfunction
 "}}}
 
@@ -91,6 +97,6 @@ endfunction
 """"
 vnoremap <silent> y <esc>:call <sid>copy('y')<cr>
 vnoremap <silent> x <esc>:call <sid>copy('x')<cr>
-nnoremap <silent> p :call <sid>paste('p')<cr>
-nnoremap <silent> P :call <sid>paste('P')<cr>
-imap <silent> <c-v> <esc>:call <sid>paste('p')<cr><insert><right>
+nnoremap <silent> p :call <sid>paste('p', 0)<cr>
+nnoremap <silent> P :call <sid>paste('P', 0)<cr>
+imap <silent> <c-v> <esc>:call <sid>paste('p', 1)<cr>
