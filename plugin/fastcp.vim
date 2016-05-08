@@ -15,7 +15,7 @@ let g:fastcp_key_timeout = get(g:, "fastcp_key_timeout", 400)
 "" local functions
 """"
 "{{{
-" \brief	read input character with timeout
+" \brief	read input character with timeout, without consuming it
 function s:getchar(timeout_ms)
 	let l:sleeped = a:timeout_ms
 	while l:sleeped > 0 && getchar(1) == 0
@@ -45,22 +45,17 @@ function s:copy(op)
 	" check if valid registers specified
 	" if not leave selection in unnamed register
 	if l:char >= 97 && l:char <= 122
-		let l:char = nr2char(getchar(0))		" consume the character
+		let l:reg = nr2char(getchar(0))		" consume the character
 	elseif a:op == 'x'
-		let l:char = 'x'
+		let l:reg = 'x'
 	else
-		let l:char = 'y'
+		let l:reg = 'y'
 	endif
 
 	" copy last selection 'gv' into registers
 	" prevent recursive calls to 'x' or 'y' through '!'
-	if a:op == 'x'
-		exec 'normal! gv"' . l:char . 'x'
-		call setreg('"', getreg(l:char))
-	else
-		exec 'normal! gv"' . l:char . 'y'
-		call setreg('"', getreg(l:char))
-	endif
+	exec 'normal! gv""' . a:op
+	exec 'normal! gv"' . l:reg . a:op
 endfunction
 "}}}
 
@@ -72,17 +67,16 @@ endfunction
 function s:paste(op, ins)
 	" read char
 	let l:char = s:getchar(g:fastcp_key_timeout)
-	let l:reg = nr2char(l:char)
 
-	" copy content of specified register (l:reg) if != 'p'  to unnamed register
-	if l:char >= 97 && l:char <= 122 && l:reg != 'p'
-		let l:char = getchar(0)
-		call setreg('"', getreg(l:reg))
+	" identify register to be used, prevent 'p' (112) to allow multiple fast paste
+	if l:char >= 97 && l:char <= 122 && l:char != 112
+		let l:reg = nr2char(getchar(0))
+	else
+		let l:reg = '"'
 	endif
 
-	" insert content of unnamed register to buffer
-	" prevent recursive execution via normal!
-	exec 'normal! ""' . a:op
+	" insert content of given register, prevent recursive execution via normal!
+	exec 'normal! "' . l:reg . a:op
 
 	" trigger insert mode
 	if a:ins
