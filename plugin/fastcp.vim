@@ -52,9 +52,8 @@ function s:copy(op)
 		let l:reg = 'y'
 	endif
 
-	" copy last selection 'gv' into registers
+	" copy/cut last selection 'gv' into register l:reg
 	" prevent recursive calls to 'x' or 'y' through '!'
-	exec 'normal! gv""' . a:op
 	exec 'normal! gv"' . l:reg . a:op
 endfunction
 "}}}
