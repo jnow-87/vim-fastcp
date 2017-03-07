@@ -4,12 +4,23 @@ endif
 
 let g:loaded_fastcp = 1
 
+" get own script ID
+nmap <c-f11><c-f12><c-f13> <sid>
+let s:sid = "<SNR>" . maparg("<c-f11><c-f12><c-f13>", "n", 0, 1).sid . "_"
+nunmap <c-f11><c-f12><c-f13>
+
 
 """"
 "" global variables
 """"
-let g:fastcp_key_timeout = get(g:, "fastcp_key_timeout", 400)
-
+"{{{
+let g:fastcp_map_timeout = get(g:, "fastcp_map_timeout", 400)
+let g:fastcp_map_copy = get(g:, "fastcp_map_copy", "y")
+let g:fastcp_map_cut = get(g:, "fastcp_map_cut", "x")
+let g:fastcp_map_paste_front = get(g:, "fastcp_map_paste_front", "P")
+let g:fastcp_map_paste_back = get(g:, "fastcp_map_paste_back", "p")
+let g:fastcp_map_paste_i = get(g:, "fastcp_map_paste_i", "<c-v>")
+"}}}
 
 """"
 "" local functions
@@ -28,7 +39,7 @@ endfunction
 "}}}
 
 """"
-"" main functions
+"" global functions
 """"
 "{{{
 " \brief	copy selection into register
@@ -40,7 +51,7 @@ endfunction
 " \param	op		define whether to yank ('y') or to cut ('x')
 function s:copy(op)
 	" read char from input
-	let l:char = s:getchar(g:fastcp_key_timeout)
+	let l:char = s:getchar(g:fastcp_map_timeout)
 
 	" check if valid registers specified
 	" if not leave selection in unnamed register
@@ -65,7 +76,7 @@ endfunction
 " \param	ins		switch to insert mode once done
 function s:paste(op, ins)
 	" read char
-	let l:char = s:getchar(g:fastcp_key_timeout)
+	let l:char = s:getchar(g:fastcp_map_timeout)
 
 	" identify register to be used, prevent 'p' (112) to allow multiple fast paste
 	if l:char >= 97 && l:char <= 122 && l:char != 112
@@ -84,12 +95,13 @@ function s:paste(op, ins)
 endfunction
 "}}}
 
-
 """"
 "" mappings
 """"
-vnoremap <silent> y <esc>:call <sid>copy('y')<cr>
-vnoremap <silent> x <esc>:call <sid>copy('x')<cr>
-nnoremap <silent> p :call <sid>paste('p', 0)<cr>
-nnoremap <silent> P :call <sid>paste('P', 0)<cr>
-imap <silent> <c-v> <esc>:call <sid>paste('p', 1)<cr>
+"{{{
+call util#map#v(g:fastcp_map_copy, '<esc>:call ' . s:sid . 'copy("y")<cr>', '')
+call util#map#v(g:fastcp_map_cut, '<esc>:call ' . s:sid . 'copy("x")<cr>', '')
+call util#map#n(g:fastcp_map_paste_front, ':call ' . s:sid . 'paste("P", 0)<cr>', '')
+call util#map#n(g:fastcp_map_paste_back, ':call ' . s:sid . 'paste("p", 0)<cr>', '')
+call util#map#i(g:fastcp_map_paste_i, ":call " . s:sid . "paste('p', 1)<cr>", "noinsert")
+"}}}
