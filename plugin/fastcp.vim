@@ -103,5 +103,5 @@ call util#map#v(g:fastcp_map_copy, '<esc>:call ' . s:sid . 'copy("y")<cr>', '')
 call util#map#v(g:fastcp_map_cut, '<esc>:call ' . s:sid . 'copy("x")<cr>', '')
 call util#map#n(g:fastcp_map_paste_front, ':call ' . s:sid . 'paste("P", 0)<cr>', '')
 call util#map#n(g:fastcp_map_paste_back, ':call ' . s:sid . 'paste("p", 0)<cr>', '')
-call util#map#i(g:fastcp_map_paste_i, ":call " . s:sid . "paste('p', 1)<cr>", "noinsert")
+call util#map#i(g:fastcp_map_paste_i, "<esc>:call " . s:sid . "paste('p', 1)<cr>", "noescape noinsert")
 "}}}
